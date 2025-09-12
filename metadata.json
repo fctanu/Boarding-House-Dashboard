@@ -1,0 +1,5 @@
+{
+  "name": "Boarding House Dashboard",
+  "description": "A dashboard for boarding house owners to track payments, room availability, and rent dues. Features include a monthly collection summary and bulk CSV import for tenant data.",
+  "requestFramePermissions": []
+}
