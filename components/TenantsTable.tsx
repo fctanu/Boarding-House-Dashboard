@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import type { Tenant } from '../types';
 import { PaymentStatus } from '../types';
-import { CheckCircleIcon, ClockIcon, ExclamationTriangleIcon } from './Icons';
+import { CheckCircleIcon, ClockIcon, ExclamationTriangleIcon, CalendarAlertIcon } from './Icons';
 
 // UndoPaymentButton: confirmation before undoing payment
 interface UndoPaymentButtonProps {
@@ -67,26 +67,62 @@ const StatusBadge: React.FC<{ status: PaymentStatus }> = ({ status }) => {
 
 const TenantsTable: React.FC<TenantsTableProps> = ({ tenants, onUpdateStatus }) => {
   const [filter, setFilter] = useState('');
+  const [sortByClosest, setSortByClosest] = useState(false);
 
   const filteredTenants = useMemo(() => {
-    return tenants.filter(
+    const list = tenants.filter(
       (tenant) =>
         tenant.name.toLowerCase().includes(filter.toLowerCase()) ||
         tenant.roomNumber.toString().includes(filter),
     );
-  }, [tenants, filter]);
+    if (!sortByClosest) return list;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const toAbsDays = (dStr: string) => {
+      const d = new Date(dStr);
+      d.setHours(0, 0, 0, 0);
+      return Math.abs(d.getTime() - today.getTime());
+    };
+    return [...list].sort((a, b) => {
+      const da = toAbsDays(a.dueDate);
+      const db = toAbsDays(b.dueDate);
+      if (da !== db) return da - db;
+      // Tiebreakers: overdue first, then earlier date, then name
+      const aOver = new Date(a.dueDate) < today;
+      const bOver = new Date(b.dueDate) < today;
+      if (aOver !== bOver) return aOver ? -1 : 1;
+      if (a.dueDate !== b.dueDate) return a.dueDate.localeCompare(b.dueDate);
+      return a.name.localeCompare(b.name);
+    });
+  }, [tenants, filter, sortByClosest]);
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-md">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold text-slate-800">Payments</h2>
-        <input
-          type="text"
-          placeholder="Search by name or room..."
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
-        />
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setSortByClosest((v) => !v)}
+            className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg font-semibold transition ${
+              sortByClosest ? 'bg-sky-600 text-white' : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+            }`}
+            aria-pressed={sortByClosest}
+            aria-label="Sort by closest due date"
+            title="Sort by closest due date"
+          >
+            <CalendarAlertIcon className="w-4 h-4" />
+            <span className="hidden sm:inline">Closest Due Date</span>
+            <span className="sm:hidden">Sort</span>
+          </button>
+          <input
+            type="text"
+            placeholder="Search by name or room..."
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+          />
+        </div>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-left">

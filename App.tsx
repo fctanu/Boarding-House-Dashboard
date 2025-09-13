@@ -9,6 +9,7 @@ import TenantsTable from './components/TenantsTable';
 import RoomGrid from './components/RoomGrid';
 import CSVImporter from './components/CSVImporter';
 import RoomModal from './components/RoomModal';
+import MonthPicker from './components/MonthPicker';
 import {
   HomeIcon,
   UserGroupIcon,
@@ -51,6 +52,7 @@ const App: React.FC = () => {
   const [editTenant, setEditTenant] = useState<Tenant | null>(null);
   // Modal state for adding room
   const [addRoomOpen, setAddRoomOpen] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => new Date().toISOString().slice(0, 7));
   // Modal state for room info
   const [roomInfo, setRoomInfo] = useState<{
     room: Room;
@@ -112,24 +114,39 @@ const App: React.FC = () => {
 
   const stats = useMemo(() => {
     const availableRooms = rooms.filter((room) => room.isAvailable).length;
+    const totalRooms = rooms.length;
     const rentDueToday = tenants.filter(
       (t) => t.dueDate === today && t.status === PaymentStatus.Unpaid,
     ).length;
-    const totalCollectionCurrentMonth = tenants
+    const refDate = new Date(`${selectedMonth}-01`);
+    const currentMonth = refDate.getMonth();
+    const currentYear = refDate.getFullYear();
+    const monthLabel = refDate.toLocaleString(undefined, { month: 'long', year: 'numeric' });
+    // Sum payments actually paid in the current month/year
+    const paymentsSum = tenants.reduce((sum, t) => {
+      const paidThisMonth = (t.payments ?? [])
+        .filter((p) => {
+          const d = new Date(p.date);
+          return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+        })
+        .reduce((s, p) => s + p.amount, 0);
+      return sum + paidThisMonth;
+    }, 0);
+    // Fallback for legacy data: if a tenant is marked Paid this month but has no recorded payment, count rentAmount
+    const fallbackSum = tenants
       .filter((t) => {
-        const dueDate = new Date(t.dueDate);
-        const currentMonth = new Date().getMonth();
-        const currentYear = new Date().getFullYear();
-        return (
-          t.status === PaymentStatus.Paid &&
-          dueDate.getMonth() === currentMonth &&
-          dueDate.getFullYear() === currentYear
-        );
+        const dd = new Date(t.dueDate);
+        const hasPayment = (t.payments ?? []).some((p) => {
+          const pd = new Date(p.date);
+          return pd.getMonth() === currentMonth && pd.getFullYear() === currentYear;
+        });
+        return t.status === PaymentStatus.Paid && dd.getMonth() === currentMonth && dd.getFullYear() === currentYear && !hasPayment;
       })
-      .reduce((sum, t) => sum + t.rentAmount, 0);
+      .reduce((s, t) => s + t.rentAmount, 0);
+    const totalCollectionCurrentMonth = paymentsSum + fallbackSum;
 
-    return { availableRooms, rentDueToday, totalCollectionCurrentMonth };
-  }, [rooms, tenants, today]);
+    return { availableRooms, totalRooms, rentDueToday, totalCollectionCurrentMonth, monthLabel };
+  }, [rooms, tenants, today, selectedMonth]);
 
   const monthlyChartData = useMemo<MonthlyData[]>(() => {
     const data: {
@@ -180,14 +197,38 @@ const App: React.FC = () => {
 
   const handleUpdateTenantStatus = useCallback(
     (tenantId: string, status: PaymentStatus) => {
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
       setTenants((prevTenants) =>
-        prevTenants.map((t) => (t.id === tenantId ? { ...t, status } : t)),
+        prevTenants.map((t) => {
+          if (t.id !== tenantId) return t;
+          if (status === PaymentStatus.Paid) {
+            const payments = Array.isArray(t.payments) ? [...t.payments] : [];
+            const exists = payments.some((p) => {
+              const d = new Date(p.date);
+              return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+            });
+            if (!exists) payments.push({ date: today, amount: t.rentAmount });
+            return { ...t, status, payments };
+          }
+          if (status === PaymentStatus.Unpaid) {
+            const filtered = Array.isArray(t.payments)
+              ? t.payments.filter((p) => {
+                  const d = new Date(p.date);
+                  return !(d.getMonth() === currentMonth && d.getFullYear() === currentYear);
+                })
+              : [];
+            return { ...t, status, payments: filtered };
+          }
+          return { ...t, status };
+        }),
       );
       if (status === PaymentStatus.Paid) {
         showToast('Payment recorded successfully!');
       }
     },
-    [setTenants, showToast],
+    [setTenants, showToast, today],
   );
 
   const handleSaveTenant = useCallback(
@@ -327,25 +368,29 @@ const App: React.FC = () => {
         </div>
       </aside>
 
-      <main className="flex-1 p-4 md:p-8 overflow-y-auto">
-        <header className="mb-10 border-b border-slate-200 pb-6">
-          <h1 className="text-5xl font-extrabold text-sky-700 capitalize tracking-tight drop-shadow-lg">
+      <main className="flex-1 p-4 md:p-8 overflow-y-auto bg-gradient-to-b from-sky-200/70 to-white">
+        <header className="mb-10 border-b border-slate-200/70 pb-6">
+          <h1 className="text-5xl font-extrabold text-sky-800 capitalize tracking-tight drop-shadow-sm">
             {activeView.replace('-', ' ')}
           </h1>
-          <p className="text-slate-500 mt-2 text-lg">
-            Welcome back, <span className="font-semibold text-sky-600">{userName}</span>! Here&#39;s
-            your boarding house overview.
+          <p className="text-slate-600 mt-2 text-lg">
+            Welcome back, <span className="font-semibold text-sky-800">{userName}</span>. Use this dashboard to track rent collected, rooms available, and anything overdue — all in one place.
           </p>
           {activeView === 'dashboard' && (
             <div className="mt-4">
               {tenants.filter((t) => t.status === PaymentStatus.Overdue).length > 0 ? (
-                <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-lg px-4 py-2 font-medium">
-                  <b>Alert:</b> {tenants.filter((t) => t.status === PaymentStatus.Overdue).length}{' '}
-                  tenant(s) have overdue rent!
+                <div className="flex items-start gap-2 bg-rose-50 border border-rose-200 text-rose-800 rounded-lg px-4 py-3 font-medium shadow-sm">
+                  <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-rose-400 ring-4 ring-rose-100"></span>
+                  <div>
+                    <b className="font-semibold">Alert:</b>{' '}
+                    {tenants.filter((t) => t.status === PaymentStatus.Overdue).length} tenant(s)
+                    have overdue rent!
+                  </div>
                 </div>
               ) : (
-                <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg px-4 py-2 font-medium">
-                  All tenants are up to date on rent. Great job!
+                <div className="flex items-start gap-2 bg-sky-50 border border-sky-200 text-sky-900 rounded-lg px-4 py-3 font-medium shadow-sm">
+                  <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-sky-400 ring-4 ring-sky-100"></span>
+                  <div>All tenants are up to date on rent. Great job!</div>
                 </div>
               )}
             </div>
@@ -353,8 +398,11 @@ const App: React.FC = () => {
         </header>
 
         <div className={activeView === 'dashboard' ? 'block' : 'hidden'}>
-          <section className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
-            <DashboardStats stats={stats} />
+          <div className="flex items-center justify-end mb-4">
+            <MonthPicker value={selectedMonth} onChange={setSelectedMonth} />
+          </div>
+          <section className="mb-10">
+            <DashboardStats stats={stats} density={'roomy'} />
           </section>
           {/* Quick actions removed as requested */}
           <hr className="my-8 border-slate-300" />
