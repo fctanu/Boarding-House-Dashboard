@@ -1,8 +1,7 @@
-
 export enum PaymentStatus {
   Paid = 'Paid',
   Unpaid = 'Unpaid',
-  Overdue = 'Overdue'
+  Overdue = 'Overdue',
 }
 
 export interface Tenant {

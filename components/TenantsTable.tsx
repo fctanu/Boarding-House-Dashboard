@@ -1,17 +1,14 @@
-import React, { useState, useMemo } from "react";
-import type { Tenant } from "../types";
-import { PaymentStatus } from "../types";
-import { CheckCircleIcon, ClockIcon, ExclamationTriangleIcon } from "./Icons";
+import React, { useState, useMemo } from 'react';
+import type { Tenant } from '../types';
+import { PaymentStatus } from '../types';
+import { CheckCircleIcon, ClockIcon, ExclamationTriangleIcon } from './Icons';
 
 // UndoPaymentButton: confirmation before undoing payment
 interface UndoPaymentButtonProps {
   tenantId: string;
   onUndo: (tenantId: string, status: PaymentStatus) => void;
 }
-const UndoPaymentButton: React.FC<UndoPaymentButtonProps> = ({
-  tenantId,
-  onUndo,
-}) => {
+const UndoPaymentButton: React.FC<UndoPaymentButtonProps> = ({ tenantId, onUndo }) => {
   const [confirm, setConfirm] = useState(false);
   return confirm ? (
     <button
@@ -40,7 +37,7 @@ interface TenantsTableProps {
 
 const StatusBadge: React.FC<{ status: PaymentStatus }> = ({ status }) => {
   const baseClasses =
-    "px-3 py-1 text-xs font-medium rounded-full inline-flex items-center space-x-1";
+    'px-3 py-1 text-xs font-medium rounded-full inline-flex items-center space-x-1';
   switch (status) {
     case PaymentStatus.Paid:
       return (
@@ -69,13 +66,13 @@ const StatusBadge: React.FC<{ status: PaymentStatus }> = ({ status }) => {
 };
 
 const TenantsTable: React.FC<TenantsTableProps> = ({ tenants, onUpdateStatus }) => {
-  const [filter, setFilter] = useState("");
+  const [filter, setFilter] = useState('');
 
   const filteredTenants = useMemo(() => {
     return tenants.filter(
       (tenant) =>
         tenant.name.toLowerCase().includes(filter.toLowerCase()) ||
-        tenant.roomNumber.toString().includes(filter)
+        tenant.roomNumber.toString().includes(filter),
     );
   }, [tenants, filter]);
 
@@ -97,34 +94,19 @@ const TenantsTable: React.FC<TenantsTableProps> = ({ tenants, onUpdateStatus }) 
             <tr>
               <th className="p-4 text-sm font-semibold text-slate-600">Name</th>
               <th className="p-4 text-sm font-semibold text-slate-600">Room</th>
-              <th className="p-4 text-sm font-semibold text-slate-600">
-                Rent Amount
-              </th>
-              <th className="p-4 text-sm font-semibold text-slate-600">
-                Due Date
-              </th>
-              <th className="p-4 text-sm font-semibold text-slate-600">
-                Status
-              </th>
-              <th className="p-4 text-sm font-semibold text-slate-600">
-                Action
-              </th>
+              <th className="p-4 text-sm font-semibold text-slate-600">Rent Amount</th>
+              <th className="p-4 text-sm font-semibold text-slate-600">Due Date</th>
+              <th className="p-4 text-sm font-semibold text-slate-600">Status</th>
+              <th className="p-4 text-sm font-semibold text-slate-600">Action</th>
             </tr>
           </thead>
           <tbody>
             {filteredTenants.length > 0 ? (
               filteredTenants.map((tenant) => (
-                <tr
-                  key={tenant.id}
-                  className="border-b border-slate-200 hover:bg-slate-50"
-                >
-                  <td className="p-4 font-medium text-slate-800">
-                    {tenant.name}
-                  </td>
+                <tr key={tenant.id} className="border-b border-slate-200 hover:bg-slate-50">
+                  <td className="p-4 font-medium text-slate-800">{tenant.name}</td>
                   <td className="p-4 text-slate-600">{tenant.roomNumber}</td>
-                  <td className="p-4 text-slate-600">
-                    ${tenant.rentAmount.toLocaleString()}
-                  </td>
+                  <td className="p-4 text-slate-600">${tenant.rentAmount.toLocaleString()}</td>
                   <td className="p-4 text-slate-600">{tenant.dueDate}</td>
                   <td className="p-4">
                     <StatusBadge status={tenant.status} />
@@ -133,19 +115,14 @@ const TenantsTable: React.FC<TenantsTableProps> = ({ tenants, onUpdateStatus }) 
                     {(tenant.status === PaymentStatus.Unpaid ||
                       tenant.status === PaymentStatus.Overdue) && (
                       <button
-                        onClick={() =>
-                          onUpdateStatus(tenant.id, PaymentStatus.Paid)
-                        }
+                        onClick={() => onUpdateStatus(tenant.id, PaymentStatus.Paid)}
                         className="px-3 py-1 bg-sky-500 text-white rounded-lg text-sm font-semibold hover:bg-sky-600 transition-colors"
                       >
                         Mark as Paid
                       </button>
                     )}
                     {tenant.status === PaymentStatus.Paid && (
-                      <UndoPaymentButton
-                        tenantId={tenant.id}
-                        onUndo={onUpdateStatus}
-                      />
+                      <UndoPaymentButton tenantId={tenant.id} onUndo={onUpdateStatus} />
                     )}
                   </td>
                 </tr>

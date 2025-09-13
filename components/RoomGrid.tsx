@@ -1,6 +1,6 @@
-import React from "react";
-import type { Room, Tenant } from "../types";
-import { UserCircleIcon, CheckIcon } from "./Icons";
+import React from 'react';
+import type { Room, Tenant } from '../types';
+import { UserCircleIcon, CheckIcon } from './Icons';
 
 interface RoomGridProps {
   rooms: Room[];
@@ -37,8 +37,8 @@ const RoomGrid: React.FC<RoomGridProps> = ({
         {rooms.map((room) => {
           const tenant = getTenantForRoom(room.tenantId);
           const cardClasses = room.isAvailable
-            ? "bg-emerald-50 border-emerald-200"
-            : "bg-sky-50 border-sky-200";
+            ? 'bg-emerald-50 border-emerald-200'
+            : 'bg-sky-50 border-sky-200';
           return (
             <div
               key={room.number}
@@ -52,9 +52,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({
               }}
             >
               <div className="flex justify-between items-center">
-                <span className="font-bold text-lg text-slate-700">
-                  Room {room.number}
-                </span>
+                <span className="font-bold text-lg text-slate-700">Room {room.number}</span>
                 {room.isAvailable ? (
                   <span className="text-emerald-500">
                     <CheckIcon />
@@ -69,12 +67,8 @@ const RoomGrid: React.FC<RoomGridProps> = ({
                 <p className="text-sm text-emerald-700 mt-2">Available</p>
               ) : (
                 <div className="mt-2">
-                  <p className="text-sm font-medium text-sky-800">
-                    {tenant?.name || "Occupied"}
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    Due: {tenant?.dueDate}
-                  </p>
+                  <p className="text-sm font-medium text-sky-800">{tenant?.name || 'Occupied'}</p>
+                  <p className="text-xs text-slate-500">Due: {tenant?.dueDate}</p>
                 </div>
               )}
               <button
@@ -89,7 +83,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({
                   }
                 }}
               >
-                {room.isAvailable ? "Add Tenant" : "View"}
+                {room.isAvailable ? 'Add Tenant' : 'View'}
               </button>
             </div>
           );

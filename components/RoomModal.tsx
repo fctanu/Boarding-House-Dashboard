@@ -160,12 +160,19 @@ const RoomModal: React.FC<RoomModalProps> = ({
                       setTenantDraft((prev) => ({
                         name: e.target.value,
                         rentAmount: prev?.rentAmount ?? roomInfo.tenant?.rentAmount ?? 0,
-                        dueDate: prev?.dueDate ?? roomInfo.tenant?.dueDate ?? new Date().toISOString().split('T')[0],
+                        dueDate:
+                          prev?.dueDate ??
+                          roomInfo.tenant?.dueDate ??
+                          new Date().toISOString().split('T')[0],
                       }))
                     }
-                    onInput={() => tenantErrors.name && setTenantErrors((prev) => ({ ...prev, name: undefined }))}
+                    onInput={() =>
+                      tenantErrors.name && setTenantErrors((prev) => ({ ...prev, name: undefined }))
+                    }
                   />
-                  {tenantErrors.name && <div className="text-xs text-rose-600 mt-1">{tenantErrors.name}</div>}
+                  {tenantErrors.name && (
+                    <div className="text-xs text-rose-600 mt-1">{tenantErrors.name}</div>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Rent Amount</label>
@@ -177,10 +184,16 @@ const RoomModal: React.FC<RoomModalProps> = ({
                       setTenantDraft((prev) => ({
                         name: prev?.name ?? roomInfo.tenant?.name ?? '',
                         rentAmount: Number(e.target.value),
-                        dueDate: prev?.dueDate ?? roomInfo.tenant?.dueDate ?? new Date().toISOString().split('T')[0],
+                        dueDate:
+                          prev?.dueDate ??
+                          roomInfo.tenant?.dueDate ??
+                          new Date().toISOString().split('T')[0],
                       }))
                     }
-                    onInput={() => tenantErrors.rentAmount && setTenantErrors((prev) => ({ ...prev, rentAmount: undefined }))}
+                    onInput={() =>
+                      tenantErrors.rentAmount &&
+                      setTenantErrors((prev) => ({ ...prev, rentAmount: undefined }))
+                    }
                   />
                   {tenantErrors.rentAmount && (
                     <div className="text-xs text-rose-600 mt-1">{tenantErrors.rentAmount}</div>
@@ -191,7 +204,11 @@ const RoomModal: React.FC<RoomModalProps> = ({
                   <input
                     type="date"
                     className={`w-full border px-3 py-2 rounded ${tenantErrors.dueDate ? 'border-rose-500' : ''}`}
-                    value={tenantDraft?.dueDate ?? roomInfo.tenant?.dueDate ?? new Date().toISOString().split('T')[0]}
+                    value={
+                      tenantDraft?.dueDate ??
+                      roomInfo.tenant?.dueDate ??
+                      new Date().toISOString().split('T')[0]
+                    }
                     onChange={(e) =>
                       setTenantDraft((prev) => ({
                         name: prev?.name ?? roomInfo.tenant?.name ?? '',
@@ -199,9 +216,14 @@ const RoomModal: React.FC<RoomModalProps> = ({
                         dueDate: e.target.value,
                       }))
                     }
-                    onInput={() => tenantErrors.dueDate && setTenantErrors((prev) => ({ ...prev, dueDate: undefined }))}
+                    onInput={() =>
+                      tenantErrors.dueDate &&
+                      setTenantErrors((prev) => ({ ...prev, dueDate: undefined }))
+                    }
                   />
-                  {tenantErrors.dueDate && <div className="text-xs text-rose-600 mt-1">{tenantErrors.dueDate}</div>}
+                  {tenantErrors.dueDate && (
+                    <div className="text-xs text-rose-600 mt-1">{tenantErrors.dueDate}</div>
+                  )}
                 </div>
               </div>
             )}
@@ -233,10 +255,17 @@ const RoomModal: React.FC<RoomModalProps> = ({
                     setAddTenantQuickFlow(false);
                   } else {
                     setRoomEdit(false);
-                    setRoomDraft({ number: roomInfo.room.number, isAvailable: roomInfo.room.isAvailable });
+                    setRoomDraft({
+                      number: roomInfo.room.number,
+                      isAvailable: roomInfo.room.isAvailable,
+                    });
                     setTenantDraft(
                       roomInfo.tenant
-                        ? { name: roomInfo.tenant.name, rentAmount: roomInfo.tenant.rentAmount, dueDate: roomInfo.tenant.dueDate }
+                        ? {
+                            name: roomInfo.tenant.name,
+                            rentAmount: roomInfo.tenant.rentAmount,
+                            dueDate: roomInfo.tenant.dueDate,
+                          }
                         : null,
                     );
                     setTenantErrors({});

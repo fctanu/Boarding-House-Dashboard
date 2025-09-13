@@ -1,22 +1,22 @@
-import React, { useState, useMemo, useCallback, useEffect } from "react";
-import { usePersistentState } from "./hooks/usePersistentState";
-import type { Tenant, Room, MonthlyData } from "./types";
-import { PaymentStatus } from "./types";
-import { initialTenants, initialRooms } from "./data/dummyData";
-import DashboardStats from "./components/DashboardStats";
-import MonthlyChart from "./components/MonthlyChart";
-import TenantsTable from "./components/TenantsTable";
-import RoomGrid from "./components/RoomGrid";
-import CSVImporter from "./components/CSVImporter";
-import RoomModal from "./components/RoomModal";
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { usePersistentState } from './hooks/usePersistentState';
+import type { Tenant, Room, MonthlyData } from './types';
+import { PaymentStatus } from './types';
+import { initialTenants, initialRooms } from './data/dummyData';
+import DashboardStats from './components/DashboardStats';
+import MonthlyChart from './components/MonthlyChart';
+import TenantsTable from './components/TenantsTable';
+import RoomGrid from './components/RoomGrid';
+import CSVImporter from './components/CSVImporter';
+import RoomModal from './components/RoomModal';
 import {
   HomeIcon,
   UserGroupIcon,
   BuildingOfficeIcon,
   DocumentArrowUpIcon,
-} from "./components/Icons";
+} from './components/Icons';
 
-type View = "dashboard" | "payments" | "rooms" | "import";
+type View = 'dashboard' | 'payments' | 'rooms' | 'import';
 
 const NavItem = ({
   view,
@@ -35,11 +35,11 @@ const NavItem = ({
     onClick={() => setActiveView(view)}
     className={`flex items-center space-x-3 px-4 py-3 rounded-lg w-full text-left transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 ${
       activeView === view
-        ? "bg-sky-700 text-white shadow-md font-bold" // higher contrast
-        : "text-slate-800 hover:bg-sky-100 hover:text-sky-700"
+        ? 'bg-sky-700 text-white shadow-md font-bold' // higher contrast
+        : 'text-slate-800 hover:bg-sky-100 hover:text-sky-700'
     }`}
     tabIndex={0}
-    aria-current={activeView === view ? "page" : undefined}
+    aria-current={activeView === view ? 'page' : undefined}
   >
     {icon}
     <span className="font-semibold text-lg">{label}</span>
@@ -57,17 +57,12 @@ const App: React.FC = () => {
     tenant: Tenant | null;
   } | null>(null);
   // Room filter state
-  const [roomFilter, setRoomFilter] = useState<
-    "all" | "available" | "occupied"
-  >("all");
+  const [roomFilter, setRoomFilter] = useState<'all' | 'available' | 'occupied'>('all');
   const [toast, setToast] = useState<string | null>(null);
-  const [tenants, setTenants] = usePersistentState<Tenant[]>(
-    "tenants",
-    initialTenants
-  );
-  const [rooms, setRooms] = usePersistentState<Room[]>("rooms", initialRooms);
-  const [activeView, setActiveView] = useState<View>("dashboard");
-  const userName = "Alex"; // Example, could be made dynamic later
+  const [tenants, setTenants] = usePersistentState<Tenant[]>('tenants', initialTenants);
+  const [rooms, setRooms] = usePersistentState<Room[]>('rooms', initialRooms);
+  const [activeView, setActiveView] = useState<View>('dashboard');
+  const userName = 'Alex'; // Example, could be made dynamic later
 
   // Room info modal edit mode state
   const [roomEdit, setRoomEdit] = useState(false);
@@ -89,7 +84,7 @@ const App: React.FC = () => {
     dueDate?: string;
   }>({});
 
-  const today = useMemo(() => new Date().toISOString().split("T")[0], []);
+  const today = useMemo(() => new Date().toISOString().split('T')[0], []);
   const showToast = useCallback((message: string, ms = 3000) => {
     setToast(message);
     setTimeout(() => setToast(null), ms);
@@ -100,21 +95,17 @@ const App: React.FC = () => {
     todayDate.setHours(0, 0, 0, 0); // For date-only comparison
 
     const needsUpdate = tenants.some(
-      (t) =>
-        t.status === PaymentStatus.Unpaid && new Date(t.dueDate) < todayDate
+      (t) => t.status === PaymentStatus.Unpaid && new Date(t.dueDate) < todayDate,
     );
 
     if (needsUpdate) {
       setTenants((prevTenants) =>
         prevTenants.map((tenant) => {
-          if (
-            tenant.status === PaymentStatus.Unpaid &&
-            new Date(tenant.dueDate) < todayDate
-          ) {
+          if (tenant.status === PaymentStatus.Unpaid && new Date(tenant.dueDate) < todayDate) {
             return { ...tenant, status: PaymentStatus.Overdue };
           }
           return tenant;
-        })
+        }),
       );
     }
   }, [tenants, setTenants]);
@@ -122,7 +113,7 @@ const App: React.FC = () => {
   const stats = useMemo(() => {
     const availableRooms = rooms.filter((room) => room.isAvailable).length;
     const rentDueToday = tenants.filter(
-      (t) => t.dueDate === today && t.status === PaymentStatus.Unpaid
+      (t) => t.dueDate === today && t.status === PaymentStatus.Unpaid,
     ).length;
     const totalCollectionCurrentMonth = tenants
       .filter((t) => {
@@ -145,25 +136,25 @@ const App: React.FC = () => {
       [key: string]: { name: string; collected: number; due: number };
     } = {};
     const monthNames = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
 
     tenants.forEach((tenant) => {
       const date = new Date(tenant.dueDate);
       const year = date.getFullYear();
       const month = date.getMonth();
-      const key = `${year}-${String(month).padStart(2, "0")}`;
+      const key = `${year}-${String(month).padStart(2, '0')}`;
 
       if (!data[key]) {
         data[key] = {
@@ -190,51 +181,43 @@ const App: React.FC = () => {
   const handleUpdateTenantStatus = useCallback(
     (tenantId: string, status: PaymentStatus) => {
       setTenants((prevTenants) =>
-        prevTenants.map((t) => (t.id === tenantId ? { ...t, status } : t))
+        prevTenants.map((t) => (t.id === tenantId ? { ...t, status } : t)),
       );
       if (status === PaymentStatus.Paid) {
-        showToast("Payment recorded successfully!");
+        showToast('Payment recorded successfully!');
       }
     },
-    [setTenants, showToast]
+    [setTenants, showToast],
   );
 
   const handleSaveTenant = useCallback(
     (updatedTenant: Tenant) => {
       setTenants((prevTenants) =>
-        prevTenants.map((t) => (t.id === updatedTenant.id ? updatedTenant : t))
+        prevTenants.map((t) => (t.id === updatedTenant.id ? updatedTenant : t)),
       );
       setEditTenant(null);
-      showToast("Tenant updated successfully!");
+      showToast('Tenant updated successfully!');
     },
-    [setTenants, showToast]
+    [setTenants, showToast],
   );
 
   // Add room handler
   const handleAddRoom = useCallback(
     (roomNumber: number) => {
-      setRooms((prevRooms) => [
-        ...prevRooms,
-        { number: roomNumber, isAvailable: true },
-      ]);
+      setRooms((prevRooms) => [...prevRooms, { number: roomNumber, isAvailable: true }]);
       setAddRoomOpen(false);
       showToast(`Room ${roomNumber} added successfully!`);
     },
-    [setRooms, showToast]
+    [setRooms, showToast],
   );
 
   const handleImport = useCallback(
-    (
-      newTenants: Omit<Tenant, "id" | "status">[],
-      showSuccessMessage: (count: number) => void
-    ) => {
+    (newTenants: Omit<Tenant, 'id' | 'status'>[], showSuccessMessage: (count: number) => void) => {
       const tenantsToAdd: Tenant[] = [];
       const roomsToUpdate = [...rooms];
 
       newTenants.forEach((newTenant) => {
-        const roomIndex = roomsToUpdate.findIndex(
-          (r) => r.number === newTenant.roomNumber
-        );
+        const roomIndex = roomsToUpdate.findIndex((r) => r.number === newTenant.roomNumber);
 
         // Case 1: Room does not exist. Create it and assign tenant.
         if (roomIndex === -1) {
@@ -274,9 +257,9 @@ const App: React.FC = () => {
 
       showSuccessMessage(tenantsToAdd.length);
       showToast(`${tenantsToAdd.length} tenant(s) imported successfully!`);
-      setActiveView("payments");
+      setActiveView('payments');
     },
-    [rooms, setTenants, setRooms, showToast]
+    [rooms, setTenants, setRooms, showToast],
   );
 
   return (
@@ -287,9 +270,7 @@ const App: React.FC = () => {
         </div>
       )}
       <aside className="w-full md:w-64 bg-white shadow-lg p-4 flex flex-col">
-        <div className="text-2xl font-bold text-sky-700 mb-8 p-3">
-          Boarding House OS
-        </div>
+        <div className="text-2xl font-bold text-sky-700 mb-8 p-3">Boarding House OS</div>
         <nav className="flex flex-col space-y-2">
           <NavItem
             view="dashboard"
@@ -326,19 +307,19 @@ const App: React.FC = () => {
             onClick={() => {
               if (
                 !confirm(
-                  "This will remove all tenants, rooms, and payments from this browser. Continue?"
+                  'This will remove all tenants, rooms, and payments from this browser. Continue?',
                 )
               )
                 return;
               try {
-                localStorage.removeItem("tenants");
-                localStorage.removeItem("rooms");
+                localStorage.removeItem('tenants');
+                localStorage.removeItem('rooms');
               } catch (err) {
                 console.error('Failed clearing local storage', err);
               }
               setTenants([]);
               setRooms([]);
-              showToast("All data cleared.", 2500);
+              showToast('All data cleared.', 2500);
             }}
           >
             Reset Data
@@ -349,23 +330,17 @@ const App: React.FC = () => {
       <main className="flex-1 p-4 md:p-8 overflow-y-auto">
         <header className="mb-10 border-b border-slate-200 pb-6">
           <h1 className="text-5xl font-extrabold text-sky-700 capitalize tracking-tight drop-shadow-lg">
-            {activeView.replace("-", " ")}
+            {activeView.replace('-', ' ')}
           </h1>
           <p className="text-slate-500 mt-2 text-lg">
-            Welcome back,{" "}
-            <span className="font-semibold text-sky-600">{userName}</span>!
-            Here&#39;s your boarding house overview.
+            Welcome back, <span className="font-semibold text-sky-600">{userName}</span>! Here&#39;s
+            your boarding house overview.
           </p>
-          {activeView === "dashboard" && (
+          {activeView === 'dashboard' && (
             <div className="mt-4">
-              {tenants.filter((t) => t.status === PaymentStatus.Overdue)
-                .length > 0 ? (
+              {tenants.filter((t) => t.status === PaymentStatus.Overdue).length > 0 ? (
                 <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-lg px-4 py-2 font-medium">
-                  <b>Alert:</b>{" "}
-                  {
-                    tenants.filter((t) => t.status === PaymentStatus.Overdue)
-                      .length
-                  }{" "}
+                  <b>Alert:</b> {tenants.filter((t) => t.status === PaymentStatus.Overdue).length}{' '}
                   tenant(s) have overdue rent!
                 </div>
               ) : (
@@ -377,7 +352,7 @@ const App: React.FC = () => {
           )}
         </header>
 
-        <div className={activeView === "dashboard" ? "block" : "hidden"}>
+        <div className={activeView === 'dashboard' ? 'block' : 'hidden'}>
           <section className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
             <DashboardStats stats={stats} />
           </section>
@@ -387,58 +362,50 @@ const App: React.FC = () => {
             <MonthlyChart data={monthlyChartData} />
           </section>
         </div>
-        <div className={activeView === "payments" ? "block" : "hidden"}>
-          <TenantsTable
-            tenants={tenants}
-            onUpdateStatus={handleUpdateTenantStatus}
-          />
+        <div className={activeView === 'payments' ? 'block' : 'hidden'}>
+          <TenantsTable tenants={tenants} onUpdateStatus={handleUpdateTenantStatus} />
         </div>
-        <div className={activeView === "rooms" ? "block" : "hidden"}>
+        <div className={activeView === 'rooms' ? 'block' : 'hidden'}>
           <div className="flex items-center mb-4 gap-2">
             <span className="font-bold text-lg mr-4">Room Status</span>
             <button
               className={`px-4 py-2 rounded-lg font-semibold transition ${
-                roomFilter === "all"
-                  ? "bg-sky-600 text-white"
-                  : "bg-slate-200 text-slate-700"
+                roomFilter === 'all' ? 'bg-sky-600 text-white' : 'bg-slate-200 text-slate-700'
               }`}
-              onClick={() => setRoomFilter("all")}
+              onClick={() => setRoomFilter('all')}
             >
               All Rooms
             </button>
             <button
               className={`px-4 py-2 rounded-lg font-semibold transition ${
-                roomFilter === "available"
-                  ? "bg-emerald-600 text-white"
-                  : "bg-slate-200 text-slate-700"
+                roomFilter === 'available'
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-slate-200 text-slate-700'
               }`}
-              onClick={() => setRoomFilter("available")}
+              onClick={() => setRoomFilter('available')}
             >
               Available
             </button>
             <button
               className={`px-4 py-2 rounded-lg font-semibold transition ${
-                roomFilter === "occupied"
-                  ? "bg-sky-600 text-white"
-                  : "bg-slate-200 text-slate-700"
+                roomFilter === 'occupied' ? 'bg-sky-600 text-white' : 'bg-slate-200 text-slate-700'
               }`}
-              onClick={() => setRoomFilter("occupied")}
+              onClick={() => setRoomFilter('occupied')}
             >
               Occupied
             </button>
           </div>
           <RoomGrid
             rooms={rooms.filter((room) => {
-              if (roomFilter === "all") return true;
-              if (roomFilter === "available") return room.isAvailable;
-              if (roomFilter === "occupied") return !room.isAvailable;
+              if (roomFilter === 'all') return true;
+              if (roomFilter === 'available') return room.isAvailable;
+              if (roomFilter === 'occupied') return !room.isAvailable;
               return true;
             })}
             tenants={tenants}
             onAddRoom={() => setAddRoomOpen(true)}
             onRoomClick={(room) => {
-              const tenant =
-                tenants.find((t) => t.id === room.tenantId) || null;
+              const tenant = tenants.find((t) => t.id === room.tenantId) || null;
               setRoomInfo({ room, tenant });
               setRoomEdit(false);
               setRoomDraft({
@@ -453,9 +420,9 @@ const App: React.FC = () => {
               setRoomInfo({ room, tenant: null });
               setRoomDraft({ number: room.number, isAvailable: false });
               setTenantDraft({
-                name: "",
+                name: '',
                 rentAmount: 0,
-                dueDate: new Date().toISOString().split("T")[0],
+                dueDate: new Date().toISOString().split('T')[0],
               });
               setRoomEdit(true);
               setAddTenantQuickFlow(true);
@@ -463,7 +430,7 @@ const App: React.FC = () => {
             }}
           />
         </div>
-        <div className={activeView === "import" ? "block" : "hidden"}>
+        <div className={activeView === 'import' ? 'block' : 'hidden'}>
           <CSVImporter onImport={handleImport} />
         </div>
       </main>
@@ -484,15 +451,11 @@ const App: React.FC = () => {
                   type="text"
                   className="w-full border px-3 py-2 rounded"
                   value={editTenant.name}
-                  onChange={(e) =>
-                    setEditTenant({ ...editTenant, name: e.target.value })
-                  }
+                  onChange={(e) => setEditTenant({ ...editTenant, name: e.target.value })}
                 />
               </div>
               <div className="mb-3">
-                <label className="block text-sm font-medium mb-1">
-                  Room Number
-                </label>
+                <label className="block text-sm font-medium mb-1">Room Number</label>
                 <input
                   type="number"
                   className="w-full border px-3 py-2 rounded"
@@ -506,9 +469,7 @@ const App: React.FC = () => {
                 />
               </div>
               <div className="mb-3">
-                <label className="block text-sm font-medium mb-1">
-                  Rent Amount
-                </label>
+                <label className="block text-sm font-medium mb-1">Rent Amount</label>
                 <input
                   type="number"
                   className="w-full border px-3 py-2 rounded"
@@ -522,16 +483,12 @@ const App: React.FC = () => {
                 />
               </div>
               <div className="mb-3">
-                <label className="block text-sm font-medium mb-1">
-                  Due Date
-                </label>
+                <label className="block text-sm font-medium mb-1">Due Date</label>
                 <input
                   type="date"
                   className="w-full border px-3 py-2 rounded"
                   value={editTenant.dueDate}
-                  onChange={(e) =>
-                    setEditTenant({ ...editTenant, dueDate: e.target.value })
-                  }
+                  onChange={(e) => setEditTenant({ ...editTenant, dueDate: e.target.value })}
                 />
               </div>
               <div className="flex gap-2 mt-6">
@@ -578,7 +535,10 @@ const App: React.FC = () => {
               if (!nameVal) errs.name = 'Tenant name is required.';
               if (!rentVal || rentVal <= 0) errs.rentAmount = 'Rent amount must be greater than 0.';
               if (!dueVal) errs.dueDate = 'Due date is required.';
-              if (Object.keys(errs).length > 0) { setTenantErrors(errs); return; }
+              if (Object.keys(errs).length > 0) {
+                setTenantErrors(errs);
+                return;
+              }
             }
             // Validate duplicate room number
             if (number !== originalNumber && rooms.some((r) => r.number === number)) {
@@ -586,34 +546,69 @@ const App: React.FC = () => {
               return;
             }
             // Update rooms
-            setRooms((prev) => prev
-              .map((r) => {
-                if (r.number !== originalNumber) return r;
-                const next: Room = { number, isAvailable };
-                if (!isAvailable && r.tenantId) next.tenantId = r.tenantId;
-                return next;
-              })
-              .sort((a, b) => a.number - b.number)
+            setRooms((prev) =>
+              prev
+                .map((r) => {
+                  if (r.number !== originalNumber) return r;
+                  const next: Room = { number, isAvailable };
+                  if (!isAvailable && r.tenantId) next.tenantId = r.tenantId;
+                  return next;
+                })
+                .sort((a, b) => a.number - b.number),
             );
             // Tenants
             if (!isAvailable) {
               const roomHasTenant = hasExistingTenant;
               if (roomHasTenant && roomInfo.tenant) {
-                setTenants((prev) => prev.map((t) => t.id === roomInfo.tenant!.id
-                  ? { ...t, name: tenantDraft?.name ?? t.name, rentAmount: tenantDraft?.rentAmount ?? t.rentAmount, dueDate: tenantDraft?.dueDate ?? t.dueDate, roomNumber: number }
-                  : t));
+                setTenants((prev) =>
+                  prev.map((t) =>
+                    t.id === roomInfo.tenant!.id
+                      ? {
+                          ...t,
+                          name: tenantDraft?.name ?? t.name,
+                          rentAmount: tenantDraft?.rentAmount ?? t.rentAmount,
+                          dueDate: tenantDraft?.dueDate ?? t.dueDate,
+                          roomNumber: number,
+                        }
+                      : t,
+                  ),
+                );
               } else if (tenantDraft && tenantDraft.name.trim()) {
                 const newTenantId = `t_${Date.now()}`;
-                setTenants((prev) => ([...prev, { id: newTenantId, name: tenantDraft.name.trim(), roomNumber: number, mobile: '', rentAmount: tenantDraft.rentAmount || 0, dueDate: tenantDraft.dueDate, status: PaymentStatus.Unpaid, payments: [] }]));
-                setRooms((prev) => prev.map((r) => r.number === number ? { ...r, tenantId: newTenantId, isAvailable: false } : r));
+                setTenants((prev) => [
+                  ...prev,
+                  {
+                    id: newTenantId,
+                    name: tenantDraft.name.trim(),
+                    roomNumber: number,
+                    mobile: '',
+                    rentAmount: tenantDraft.rentAmount || 0,
+                    dueDate: tenantDraft.dueDate,
+                    status: PaymentStatus.Unpaid,
+                    payments: [],
+                  },
+                ]);
+                setRooms((prev) =>
+                  prev.map((r) =>
+                    r.number === number ? { ...r, tenantId: newTenantId, isAvailable: false } : r,
+                  ),
+                );
               }
             }
             // Local modal state
-            const updatedRoom: Room = isAvailable ? { number, isAvailable: true } : { ...roomInfo.room, number, isAvailable };
+            const updatedRoom: Room = isAvailable
+              ? { number, isAvailable: true }
+              : { ...roomInfo.room, number, isAvailable };
             const updatedTenant = !isAvailable
-              ? (roomInfo.tenant
-                ? { ...roomInfo.tenant, name: tenantDraft?.name ?? roomInfo.tenant.name, rentAmount: tenantDraft?.rentAmount ?? roomInfo.tenant.rentAmount, dueDate: tenantDraft?.dueDate ?? roomInfo.tenant.dueDate, roomNumber: number }
-                : (tenantDraft?.name
+              ? roomInfo.tenant
+                ? {
+                    ...roomInfo.tenant,
+                    name: tenantDraft?.name ?? roomInfo.tenant.name,
+                    rentAmount: tenantDraft?.rentAmount ?? roomInfo.tenant.rentAmount,
+                    dueDate: tenantDraft?.dueDate ?? roomInfo.tenant.dueDate,
+                    roomNumber: number,
+                  }
+                : tenantDraft?.name
                   ? ({
                       id: 'temp',
                       name: tenantDraft.name.trim(),
@@ -621,9 +616,9 @@ const App: React.FC = () => {
                       dueDate: tenantDraft.dueDate ?? '',
                       roomNumber: number,
                       status: PaymentStatus.Unpaid,
-                      payments: []
+                      payments: [],
                     } as Tenant)
-                  : null))
+                  : null
               : null;
             setRoomInfo({ room: updatedRoom, tenant: updatedTenant });
             setRoomEdit(false);
@@ -644,16 +639,14 @@ const App: React.FC = () => {
                 const form = e.target as HTMLFormElement & { roomNum: { value: string } };
                 const roomNum = Number(form.roomNum.value);
                 if (!roomNum || roomNum <= 0) {
-                  showToast("Please enter a valid room number greater than 0.");
+                  showToast('Please enter a valid room number greater than 0.');
                   return;
                 }
                 handleAddRoom(roomNum);
               }}
             >
               <div className="mb-3">
-                <label className="block text-sm font-medium mb-1">
-                  Room Number
-                </label>
+                <label className="block text-sm font-medium mb-1">Room Number</label>
                 <input
                   name="roomNum"
                   type="number"
