@@ -36,7 +36,6 @@ const UndoPaymentButton: React.FC<UndoPaymentButtonProps> = ({
 interface TenantsTableProps {
   tenants: Tenant[];
   onUpdateStatus: (tenantId: string, status: PaymentStatus) => void;
-  onEditTenant: (tenant: Tenant) => void;
 }
 
 const StatusBadge: React.FC<{ status: PaymentStatus }> = ({ status }) => {
@@ -69,11 +68,7 @@ const StatusBadge: React.FC<{ status: PaymentStatus }> = ({ status }) => {
   }
 };
 
-const TenantsTable: React.FC<TenantsTableProps> = ({
-  tenants,
-  onUpdateStatus,
-  onEditTenant,
-}) => {
+const TenantsTable: React.FC<TenantsTableProps> = ({ tenants, onUpdateStatus }) => {
   const [filter, setFilter] = useState("");
 
   const filteredTenants = useMemo(() => {

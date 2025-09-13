@@ -8,6 +8,7 @@ import MonthlyChart from "./components/MonthlyChart";
 import TenantsTable from "./components/TenantsTable";
 import RoomGrid from "./components/RoomGrid";
 import CSVImporter from "./components/CSVImporter";
+import RoomModal from "./components/RoomModal";
 import {
   HomeIcon,
   UserGroupIcon,
@@ -89,6 +90,10 @@ const App: React.FC = () => {
   }>({});
 
   const today = useMemo(() => new Date().toISOString().split("T")[0], []);
+  const showToast = useCallback((message: string, ms = 3000) => {
+    setToast(message);
+    setTimeout(() => setToast(null), ms);
+  }, []);
 
   useEffect(() => {
     const todayDate = new Date();
@@ -188,17 +193,11 @@ const App: React.FC = () => {
         prevTenants.map((t) => (t.id === tenantId ? { ...t, status } : t))
       );
       if (status === PaymentStatus.Paid) {
-        setToast("Payment recorded successfully!");
-        setTimeout(() => setToast(null), 3000);
+        showToast("Payment recorded successfully!");
       }
     },
-    [setTenants]
+    [setTenants, showToast]
   );
-
-  // Edit tenant handler
-  const handleEditTenant = useCallback((tenant: Tenant) => {
-    setEditTenant(tenant);
-  }, []);
 
   const handleSaveTenant = useCallback(
     (updatedTenant: Tenant) => {
@@ -206,10 +205,9 @@ const App: React.FC = () => {
         prevTenants.map((t) => (t.id === updatedTenant.id ? updatedTenant : t))
       );
       setEditTenant(null);
-      setToast("Tenant updated successfully!");
-      setTimeout(() => setToast(null), 3000);
+      showToast("Tenant updated successfully!");
     },
-    [setTenants]
+    [setTenants, showToast]
   );
 
   // Add room handler
@@ -220,10 +218,9 @@ const App: React.FC = () => {
         { number: roomNumber, isAvailable: true },
       ]);
       setAddRoomOpen(false);
-      setToast(`Room ${roomNumber} added successfully!`);
-      setTimeout(() => setToast(null), 3000);
+      showToast(`Room ${roomNumber} added successfully!`);
     },
-    [setRooms]
+    [setRooms, showToast]
   );
 
   const handleImport = useCallback(
@@ -276,11 +273,10 @@ const App: React.FC = () => {
       }
 
       showSuccessMessage(tenantsToAdd.length);
-      setToast(`${tenantsToAdd.length} tenant(s) imported successfully!`);
-      setTimeout(() => setToast(null), 3000);
-      setActiveView("tenants");
+      showToast(`${tenantsToAdd.length} tenant(s) imported successfully!`);
+      setActiveView("payments");
     },
-    [rooms, setTenants, setRooms]
+    [rooms, setTenants, setRooms, showToast]
   );
 
   return (
@@ -337,11 +333,12 @@ const App: React.FC = () => {
               try {
                 localStorage.removeItem("tenants");
                 localStorage.removeItem("rooms");
-              } catch {}
+              } catch (err) {
+                console.error('Failed clearing local storage', err);
+              }
               setTenants([]);
               setRooms([]);
-              setToast("All data cleared.");
-              setTimeout(() => setToast(null), 2500);
+              showToast("All data cleared.", 2500);
             }}
           >
             Reset Data
@@ -357,7 +354,7 @@ const App: React.FC = () => {
           <p className="text-slate-500 mt-2 text-lg">
             Welcome back,{" "}
             <span className="font-semibold text-sky-600">{userName}</span>!
-            Here's your boarding house overview.
+            Here&#39;s your boarding house overview.
           </p>
           {activeView === "dashboard" && (
             <div className="mt-4">
@@ -394,7 +391,6 @@ const App: React.FC = () => {
           <TenantsTable
             tenants={tenants}
             onUpdateStatus={handleUpdateTenantStatus}
-            onEditTenant={handleEditTenant}
           />
         </div>
         <div className={activeView === "rooms" ? "block" : "hidden"}>
@@ -557,417 +553,85 @@ const App: React.FC = () => {
           </div>
         </div>
       )}
-      {/* Room Info Modal */}
+      {/* Room Modal */}
       {roomInfo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">
-              Room {roomInfo.room.number} Details
-            </h2>
-            {!roomEdit ? (
-              <>
-                <div className="mb-2">
-                  <b>Number:</b> {roomInfo.room.number}
-                </div>
-                <div className="mb-2">
-                  <b>Status:</b>{" "}
-                  {roomInfo.room.isAvailable ? "Available" : "Occupied"}
-                </div>
-                {roomInfo.tenant ? (
-                  <>
-                    <div className="mb-2">
-                      <b>Name:</b> {roomInfo.tenant.name}
-                    </div>
-                    <div className="mb-2">
-                      <b>Rent Amount:</b> $
-                      {roomInfo.tenant.rentAmount.toLocaleString()}
-                    </div>
-                    <div className="mb-2">
-                      <b>Mobile Number:</b> {roomInfo.tenant.mobile || "N/A"}
-                    </div>
-                    <div className="mb-2">
-                      <b>Payments:</b>{" "}
-                      {roomInfo.tenant.payments
-                        ? roomInfo.tenant.payments.length
-                        : 0}
-                    </div>
-                  </>
-                ) : (
-                  <div className="mb-2">No tenant assigned.</div>
-                )}
-                <div className="flex gap-2 mt-6 justify-between">
-                  <button
-                    type="button"
-                    className="bg-slate-200 text-slate-800 px-4 py-2 rounded font-semibold"
-                    onClick={() => {
-                      setRoomEdit(true);
-                      if (roomInfo.tenant) {
-                        setTenantDraft({
-                          name: roomInfo.tenant.name,
-                          rentAmount: roomInfo.tenant.rentAmount,
-                          dueDate: roomInfo.tenant.dueDate,
-                        });
-                      } else {
-                        setTenantDraft(null);
-                      }
-                      setAddTenantQuickFlow(false);
-                      setTenantErrors({});
-                    }}
-                  >
-                    Edit
-                  </button>
-                  <div className="flex-1" />
-                  <button
-                    type="button"
-                    className="bg-sky-600 text-white px-4 py-2 rounded font-semibold ml-auto"
-                    onClick={() => setRoomInfo(null)}
-                  >
-                    Close
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="mb-3">
-                  <label className="block text-sm font-medium mb-1">
-                    Room Number
-                  </label>
-                  <input
-                    type="number"
-                    className="w-full border px-3 py-2 rounded"
-                    value={roomDraft?.number ?? roomInfo.room.number}
-                    onChange={(e) =>
-                      setRoomDraft((prev) => ({
-                        number: Number(e.target.value),
-                        isAvailable:
-                          prev?.isAvailable ?? roomInfo.room.isAvailable,
-                      }))
-                    }
-                  />
-                </div>
-                {!addTenantQuickFlow && (
-                  <div className="mb-3 flex items-center gap-2">
-                    <input
-                      id="room-available"
-                      type="checkbox"
-                      className="h-4 w-4"
-                      checked={
-                        roomDraft?.isAvailable ?? roomInfo.room.isAvailable
-                      }
-                      onChange={(e) =>
-                        setRoomDraft((prev) => ({
-                          number: prev?.number ?? roomInfo.room.number,
-                          isAvailable: e.target.checked,
-                        }))
-                      }
-                    />
-                    <label htmlFor="room-available" className="text-sm">
-                      Available
-                    </label>
-                  </div>
-                )}
-                {!addTenantQuickFlow && (
-                  <div className="text-xs text-slate-500 mb-4">
-                    Note: Marking a room as Available will unassign any current
-                    tenant from this room.
-                  </div>
-                )}
-                {/* When editing: show tenant fields if marking as occupied. If tenant is null, allow creating one. */}
-                {!roomDraft?.isAvailable && (
-                  <div className="grid grid-cols-1 gap-3">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Tenant Name
-                      </label>
-                      <input
-                        type="text"
-                        className={`w-full border px-3 py-2 rounded ${
-                          tenantErrors.name ? "border-rose-500" : ""
-                        }`}
-                        value={tenantDraft?.name ?? roomInfo.tenant?.name ?? ""}
-                        onChange={(e) =>
-                          setTenantDraft((prev) => ({
-                            name: e.target.value,
-                            rentAmount:
-                              prev?.rentAmount ??
-                              roomInfo.tenant?.rentAmount ??
-                              0,
-                            dueDate:
-                              prev?.dueDate ??
-                              roomInfo.tenant?.dueDate ??
-                              new Date().toISOString().split("T")[0],
-                          }))
-                        }
-                        onInput={() =>
-                          tenantErrors.name &&
-                          setTenantErrors((prev) => ({
-                            ...prev,
-                            name: undefined,
-                          }))
-                        }
-                      />
-                      {tenantErrors.name && (
-                        <div className="text-xs text-rose-600 mt-1">
-                          {tenantErrors.name}
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Rent Amount
-                      </label>
-                      <input
-                        type="number"
-                        className={`w-full border px-3 py-2 rounded ${
-                          tenantErrors.rentAmount ? "border-rose-500" : ""
-                        }`}
-                        value={
-                          tenantDraft?.rentAmount ??
-                          roomInfo.tenant?.rentAmount ??
-                          0
-                        }
-                        onChange={(e) =>
-                          setTenantDraft((prev) => ({
-                            name: prev?.name ?? roomInfo.tenant?.name ?? "",
-                            rentAmount: Number(e.target.value),
-                            dueDate:
-                              prev?.dueDate ??
-                              roomInfo.tenant?.dueDate ??
-                              new Date().toISOString().split("T")[0],
-                          }))
-                        }
-                        onInput={() =>
-                          tenantErrors.rentAmount &&
-                          setTenantErrors((prev) => ({
-                            ...prev,
-                            rentAmount: undefined,
-                          }))
-                        }
-                      />
-                      {tenantErrors.rentAmount && (
-                        <div className="text-xs text-rose-600 mt-1">
-                          {tenantErrors.rentAmount}
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Due Date
-                      </label>
-                      <input
-                        type="date"
-                        className={`w-full border px-3 py-2 rounded ${
-                          tenantErrors.dueDate ? "border-rose-500" : ""
-                        }`}
-                        value={
-                          tenantDraft?.dueDate ??
-                          roomInfo.tenant?.dueDate ??
-                          new Date().toISOString().split("T")[0]
-                        }
-                        onChange={(e) =>
-                          setTenantDraft((prev) => ({
-                            name: prev?.name ?? roomInfo.tenant?.name ?? "",
-                            rentAmount:
-                              prev?.rentAmount ??
-                              roomInfo.tenant?.rentAmount ??
-                              0,
-                            dueDate: e.target.value,
-                          }))
-                        }
-                        onInput={() =>
-                          tenantErrors.dueDate &&
-                          setTenantErrors((prev) => ({
-                            ...prev,
-                            dueDate: undefined,
-                          }))
-                        }
-                      />
-                      {tenantErrors.dueDate && (
-                        <div className="text-xs text-rose-600 mt-1">
-                          {tenantErrors.dueDate}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-                <div className="flex gap-2 mt-4">
-                  <button
-                    type="button"
-                    className="bg-sky-600 text-white px-4 py-2 rounded font-semibold"
-                    onClick={() => {
-                      if (!roomInfo || !roomDraft) {
-                        setRoomEdit(false);
-                        return;
-                      }
-                      const originalNumber = roomInfo.room.number;
-                      const { number, isAvailable } = roomDraft;
-                      // Validate required fields when creating a new tenant (quick add flow or no existing tenant)
-                      if (!isAvailable && !roomInfo.tenant) {
-                        const errs: {
-                          name?: string;
-                          rentAmount?: string;
-                          dueDate?: string;
-                        } = {};
-                        const nameVal = (tenantDraft?.name ?? "").trim();
-                        const rentVal = Number(tenantDraft?.rentAmount ?? 0);
-                        const dueVal = (tenantDraft?.dueDate ?? "").trim();
-                        if (!nameVal) errs.name = "Tenant name is required.";
-                        if (!rentVal || rentVal <= 0)
-                          errs.rentAmount =
-                            "Rent amount must be greater than 0.";
-                        if (!dueVal) errs.dueDate = "Due date is required.";
-                        if (Object.keys(errs).length > 0) {
-                          setTenantErrors(errs);
-                          return;
-                        }
-                      }
-                      // Validate duplicate room number
-                      if (
-                        number !== originalNumber &&
-                        rooms.some((r) => r.number === number)
-                      ) {
-                        setToast(`Room ${number} already exists.`);
-                        setTimeout(() => setToast(null), 3000);
-                        return;
-                      }
-                      // Update rooms state
-                      setRooms((prev) =>
-                        prev
-                          .map((r) => {
-                            if (r.number !== originalNumber) return r;
-                            const updated: Room = { ...r, number, isAvailable };
-                            if (isAvailable) {
-                              const { tenantId, ...rest } = updated as any;
-                              return { ...rest } as Room;
-                            }
-                            return updated;
-                          })
-                          .sort((a, b) => a.number - b.number)
-                      );
-                      // Update tenant data: if occupied
-                      if (!isAvailable) {
-                        if (roomInfo.tenant) {
-                          // Update existing tenant
-                          setTenants((prev) =>
-                            prev.map((t) =>
-                              t.id === roomInfo.tenant!.id
-                                ? {
-                                    ...t,
-                                    name: tenantDraft?.name ?? t.name,
-                                    rentAmount:
-                                      tenantDraft?.rentAmount ?? t.rentAmount,
-                                    dueDate: tenantDraft?.dueDate ?? t.dueDate,
-                                    roomNumber: number,
-                                  }
-                                : t
-                            )
-                          );
-                        } else if (tenantDraft && tenantDraft.name.trim()) {
-                          // Create new tenant and link to room
-                          const newTenantId = `t_${Date.now()}`;
-                          setTenants((prev) => [
-                            ...prev,
-                            {
-                              id: newTenantId,
-                              name: tenantDraft.name.trim(),
-                              roomNumber: number,
-                              mobile: "",
-                              rentAmount: tenantDraft.rentAmount || 0,
-                              dueDate: tenantDraft.dueDate,
-                              status: PaymentStatus.Unpaid,
-                              payments: [],
-                            },
-                          ]);
-                          // Also make sure the room links to this tenant id
-                          setRooms((prev) =>
-                            prev.map((r) =>
-                              r.number === number
-                                ? {
-                                    ...r,
-                                    tenantId: newTenantId,
-                                    isAvailable: false,
-                                  }
-                                : r
-                            )
-                          );
-                        }
-                      }
-                      // Update local modal state
-                      const updatedRoom: Room = isAvailable
-                        ? { number, isAvailable: true }
-                        : { ...roomInfo.room, number, isAvailable };
-                      const updatedTenant = !isAvailable
-                        ? roomInfo.tenant
-                          ? {
-                              ...roomInfo.tenant,
-                              name: tenantDraft?.name ?? roomInfo.tenant.name,
-                              rentAmount:
-                                tenantDraft?.rentAmount ??
-                                roomInfo.tenant.rentAmount,
-                              dueDate:
-                                tenantDraft?.dueDate ?? roomInfo.tenant.dueDate,
-                              roomNumber: number,
-                            }
-                          : tenantDraft?.name
-                          ? ({
-                              id: "temp",
-                              name: tenantDraft.name,
-                              rentAmount: tenantDraft.rentAmount,
-                              dueDate: tenantDraft.dueDate,
-                              roomNumber: number,
-                              status: PaymentStatus.Unpaid,
-                              payments: [],
-                            } as any)
-                          : null
-                        : null;
-                      setRoomInfo({ room: updatedRoom, tenant: updatedTenant });
-                      setRoomEdit(false);
-                      setAddTenantQuickFlow(false);
-                      setTenantErrors({});
-                      setToast("Room updated successfully!");
-                      setTimeout(() => setToast(null), 3000);
-                    }}
-                  >
-                    Save
-                  </button>
-                  <button
-                    type="button"
-                    className="bg-slate-200 text-slate-700 px-4 py-2 rounded font-semibold"
-                    onClick={() => {
-                      if (addTenantQuickFlow) {
-                        // In quick Add Tenant flow, closing should dismiss the modal entirely
-                        setRoomEdit(false);
-                        setRoomInfo(null);
-                        setRoomDraft(null);
-                        setTenantDraft(null);
-                        setAddTenantQuickFlow(false);
-                      } else {
-                        // Regular edit: revert to details view
-                        setRoomEdit(false);
-                        setRoomDraft({
-                          number: roomInfo.room.number,
-                          isAvailable: roomInfo.room.isAvailable,
-                        });
-                        setTenantDraft(
-                          roomInfo.tenant
-                            ? {
-                                name: roomInfo.tenant.name,
-                                rentAmount: roomInfo.tenant.rentAmount,
-                                dueDate: roomInfo.tenant.dueDate,
-                              }
-                            : null
-                        );
-                        setTenantErrors({});
-                      }
-                    }}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
+        <RoomModal
+          roomInfo={roomInfo}
+          roomEdit={roomEdit}
+          roomDraft={roomDraft}
+          tenantDraft={tenantDraft}
+          addTenantQuickFlow={addTenantQuickFlow}
+          tenantErrors={tenantErrors}
+          setRoomEdit={setRoomEdit}
+          setRoomDraft={setRoomDraft}
+          setTenantDraft={setTenantDraft}
+          setAddTenantQuickFlow={setAddTenantQuickFlow}
+          setTenantErrors={setTenantErrors}
+          onClose={() => setRoomInfo(null)}
+          onSave={({ originalNumber, number, isAvailable, hasExistingTenant, tenantDraft }) => {
+            // Validate required fields when creating a new tenant (quick add flow or no existing tenant)
+            if (!isAvailable && !hasExistingTenant) {
+              const errs: { name?: string; rentAmount?: string; dueDate?: string } = {};
+              const nameVal = (tenantDraft?.name ?? '').trim();
+              const rentVal = Number(tenantDraft?.rentAmount ?? 0);
+              const dueVal = (tenantDraft?.dueDate ?? '').trim();
+              if (!nameVal) errs.name = 'Tenant name is required.';
+              if (!rentVal || rentVal <= 0) errs.rentAmount = 'Rent amount must be greater than 0.';
+              if (!dueVal) errs.dueDate = 'Due date is required.';
+              if (Object.keys(errs).length > 0) { setTenantErrors(errs); return; }
+            }
+            // Validate duplicate room number
+            if (number !== originalNumber && rooms.some((r) => r.number === number)) {
+              showToast(`Room ${number} already exists.`);
+              return;
+            }
+            // Update rooms
+            setRooms((prev) => prev
+              .map((r) => {
+                if (r.number !== originalNumber) return r;
+                const next: Room = { number, isAvailable };
+                if (!isAvailable && r.tenantId) next.tenantId = r.tenantId;
+                return next;
+              })
+              .sort((a, b) => a.number - b.number)
+            );
+            // Tenants
+            if (!isAvailable) {
+              const roomHasTenant = hasExistingTenant;
+              if (roomHasTenant && roomInfo.tenant) {
+                setTenants((prev) => prev.map((t) => t.id === roomInfo.tenant!.id
+                  ? { ...t, name: tenantDraft?.name ?? t.name, rentAmount: tenantDraft?.rentAmount ?? t.rentAmount, dueDate: tenantDraft?.dueDate ?? t.dueDate, roomNumber: number }
+                  : t));
+              } else if (tenantDraft && tenantDraft.name.trim()) {
+                const newTenantId = `t_${Date.now()}`;
+                setTenants((prev) => ([...prev, { id: newTenantId, name: tenantDraft.name.trim(), roomNumber: number, mobile: '', rentAmount: tenantDraft.rentAmount || 0, dueDate: tenantDraft.dueDate, status: PaymentStatus.Unpaid, payments: [] }]));
+                setRooms((prev) => prev.map((r) => r.number === number ? { ...r, tenantId: newTenantId, isAvailable: false } : r));
+              }
+            }
+            // Local modal state
+            const updatedRoom: Room = isAvailable ? { number, isAvailable: true } : { ...roomInfo.room, number, isAvailable };
+            const updatedTenant = !isAvailable
+              ? (roomInfo.tenant
+                ? { ...roomInfo.tenant, name: tenantDraft?.name ?? roomInfo.tenant.name, rentAmount: tenantDraft?.rentAmount ?? roomInfo.tenant.rentAmount, dueDate: tenantDraft?.dueDate ?? roomInfo.tenant.dueDate, roomNumber: number }
+                : (tenantDraft?.name
+                  ? ({
+                      id: 'temp',
+                      name: tenantDraft.name.trim(),
+                      rentAmount: tenantDraft.rentAmount ?? 0,
+                      dueDate: tenantDraft.dueDate ?? '',
+                      roomNumber: number,
+                      status: PaymentStatus.Unpaid,
+                      payments: []
+                    } as Tenant)
+                  : null))
+              : null;
+            setRoomInfo({ room: updatedRoom, tenant: updatedTenant });
+            setRoomEdit(false);
+            setAddTenantQuickFlow(false);
+            setTenantErrors({});
+            showToast('Room updated successfully!');
+          }}
+        />
       )}
       {/* Add Room Modal */}
       {addRoomOpen && (
@@ -977,8 +641,13 @@ const App: React.FC = () => {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                const roomNum = Number((e.target as any).roomNum.value);
-                if (roomNum) handleAddRoom(roomNum);
+                const form = e.target as HTMLFormElement & { roomNum: { value: string } };
+                const roomNum = Number(form.roomNum.value);
+                if (!roomNum || roomNum <= 0) {
+                  showToast("Please enter a valid room number greater than 0.");
+                  return;
+                }
+                handleAddRoom(roomNum);
               }}
             >
               <div className="mb-3">

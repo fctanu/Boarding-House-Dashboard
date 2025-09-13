@@ -12,6 +12,8 @@ export interface Tenant {
   rentAmount: number;
   dueDate: string; // ISO format 'YYYY-MM-DD'
   status: PaymentStatus;
+  mobile?: string;
+  payments?: Array<{ date: string; amount: number }>;
 }
 
 export interface Room {

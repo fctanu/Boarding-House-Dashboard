@@ -5,7 +5,6 @@ import { UserCircleIcon, CheckIcon } from "./Icons";
 interface RoomGridProps {
   rooms: Room[];
   tenants: Tenant[];
-  onEditRoom?: (room: Room) => void;
   onAddRoom?: () => void;
   onRoomClick?: (room: Room) => void;
   onAddTenant?: (room: Room) => void;
@@ -14,7 +13,6 @@ interface RoomGridProps {
 const RoomGrid: React.FC<RoomGridProps> = ({
   rooms,
   tenants,
-  onEditRoom,
   onAddRoom,
   onRoomClick,
   onAddTenant,
@@ -84,11 +82,10 @@ const RoomGrid: React.FC<RoomGridProps> = ({
                 onClick={(e) => {
                   e.stopPropagation();
                   if (room.isAvailable) {
-                    onAddTenant
-                      ? onAddTenant(room)
-                      : onRoomClick && onRoomClick(room);
-                  } else {
-                    onRoomClick && onRoomClick(room);
+                    if (onAddTenant) onAddTenant(room);
+                    else if (onRoomClick) onRoomClick(room);
+                  } else if (onRoomClick) {
+                    onRoomClick(room);
                   }
                 }}
               >

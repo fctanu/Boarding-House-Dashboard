@@ -8,6 +8,14 @@ export default defineConfig(({ mode }) => {
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
         'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
       },
+      server: {
+        port: 3000,
+        strictPort: true
+      },
+      preview: {
+        port: 3000,
+        strictPort: true
+      },
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),
